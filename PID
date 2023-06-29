@@ -1,0 +1,67 @@
+from ev3dev2.motor import OUTPUT_B, OUTPUT_C, LargeMotor
+from ev3dev2.sensor import INPUT_1, INPUT_2, INPUT_3
+from ev3dev2.sensor.lego import ColorSensor
+
+# Definição dos sensores
+sensor1 = ColorSensor(INPUT_1)
+sensor2 = ColorSensor(INPUT_2)
+sensor3 = ColorSensor(INPUT_3)
+
+# Definição dos motores
+motor_b = LargeMotor(OUTPUT_B)
+motor_c = LargeMotor(OUTPUT_C)
+
+# Constantes do controle PID
+Kp = 1.0  # Ganho proporcional
+Ki = 0.5  # Ganho integral
+Kd = 0.2  # Ganho derivativo
+
+# Variáveis do controle PID
+last_error = 0.0
+integral = 0.0
+
+# Função para calcular o controle PID
+def calculate_pid(sensor_value):
+    global last_error, integral
+
+    # Define o valor desejado (setpoint)
+    setpoint = 50
+
+    # Calcula o erro atual
+    error = setpoint - sensor_value
+
+    # Calcula a parte proporcional
+    proportional = Kp * error
+
+    # Calcula a parte integral
+    integral += Ki * error
+
+    # Limita a parte integral para evitar valores extremos
+    integral = max(min(integral, 100), -100)
+
+    # Calcula a parte derivativa
+    derivative = Kd * (error - last_error)
+
+    # Calcula o controle PID total
+    control = proportional + integral + derivative
+
+    # Atualiza o erro anterior
+    last_error = error
+
+    return control
+
+# Loop principal
+while True:
+    # Lê os valores dos sensores
+    sensor_value1 = sensor1.value()
+    sensor_value2 = sensor2.value()
+    sensor_value3 = sensor3.value()
+
+    # Calcula o controle PID para cada sensor
+    control1 = calculate_pid(sensor_value1)
+    control2 = calculate_pid(sensor_value2)
+    control3 = calculate_pid(sensor_value3)
+
+    # Ajusta a velocidade dos motores
+    motor_b.on(control1, brake=False)
+    motor_c.on(control2, brake=False)
